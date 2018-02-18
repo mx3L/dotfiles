@@ -1,1 +1,181 @@
-/home/maros/.vim/vimrc
+filetype off
+filetype plugin indent on
+set nocompatible
+
+
+" auto-indent next line
+au FileType py set autoindent
+" auto-indent by ,for etc..
+au FileType py set smartindent
+"au FileType py set textwidth=79 " PEP-8 Friendly
+au FileType py set expandtab
+au FileType py set shiftwidth=4
+au FileType py set tabstop=4
+
+syntax enable 
+" show invisible some chars
+set list listchars=tab:▷⋅,trail:⋅,nbsp:⋅
+
+" make backspace work normally in insert mode
+set backspace=indent,eol,start
+
+"set tabstop=8 softtabstop=0 expandtab shiftwidth=4 smarttab
+nnoremap <silent> <C-l> :<C-u>nohlsearch<CR><C-l>
+set hlsearch
+set incsearch
+
+"this will allow to load project specific setting which are in .vimrc
+set exrc
+set secure
+
+
+" enable default Man page plugin
+runtime! ftplugin/man.vim
+
+" start cppman on pressing K for c++ files
+autocmd FileType cpp set keywordprg=cppman
+
+" format python code with yapf
+autocmd FileType python nnoremap <LocalLeader>= :0,$!yapf<CR>
+
+call plug#begin('~/.vim/plugged')
+
+" vim 8, asyncronous checking for errors while editing..
+Plug 'w0rp/ale'
+" vim 8, asynchronous running of scripts
+Plug 'skywind3000/asyncrun.vim'
+
+" autocomplete + others for python
+" Plug 'davidhalter/jedi-vim'
+"
+" neocomplete
+"
+"Plug 'https://github.com/Shougo/neocomplete.vim'
+
+Plug 'git://github.com/tpope/vim-unimpaired.git'
+Plug 'git://github.com/tpope/vim-repeat.git'
+Plug 'git://github.com/tpope/vim-surround.git'
+Plug 'https://github.com/morhetz/gruvbox.git'
+Plug 'https://github.com/vim-scripts/a.vim.git'
+Plug 'https://github.com/ctrlpvim/ctrlp.vim.git'
+Plug 'git://github.com/godlygeek/tabular.git'
+Plug 'https://github.com/Valloric/YouCompleteMe.git', {'do':'./install.py --clang-completer'}
+" Plug 'https://github.com/tmhedberg/SimpylFold.git'
+" Plug 'rdnetto/YCM-Generator', { 'branch': 'stable' }
+" Plug 'scrooloose/nerdtree'
+" Plug 'benmills/vimux'
+" not using currently
+" Plug 'SirVer/ultisnips' | Plug 'honza/vim-snippets'
+
+call plug#end()
+
+" appearence
+set background=dark
+" colorscheme solarized
+colorscheme gruvbox
+
+"syntactics defaults
+" set statusline+=%#warningmsg#
+" set statusline+=%{SyntasticStatuslineFlag()}
+" set statusline+=%*
+
+"let g:syntastic_always_populate_loc_list = 1
+"let g:syntastic_auto_loc_list = 1
+"let g:syntastic_check_on_open = 1
+"let g:syntastic_check_on_wq = 0
+
+" nerdtree 
+map <C-n> :NERDTreeToggle<CR>
+
+" vimmux
+map <Leader>rb :call VimuxRunCommand("clear; python " . bufname("%"))<CR>
+
+" youcompleteme
+let g:ycm_global_ycm_extra_conf = "~/.vim/.ycm_extra_conf.py"
+let g:ycm_confirm_extra_conf = 0
+nnoremap <leader>g :YcmCompleter GoToDefinitionElseDeclaration<CR>
+
+" disable tab for ultisnips
+let g:ycm_key_list_select_completion=[]
+let g:ycm_key_list_previous_completion=[]
+
+
+" virtual tabstops using spaces
+let my_tab=4
+execute "set shiftwidth=".my_tab
+execute "set softtabstop=".my_tab
+set expandtab
+ " allow toggling between local and default mode
+function! TabToggle()
+   if &expandtab
+       set shiftwidth=8
+       set softtabstop=0
+       set noexpandtab
+   else
+       execute "set shiftwidth=".g:my_tab
+       execute "set softtabstop=".g:my_tab
+       set expandtab
+   endif
+endfunction
+nmap <F9> mz:execute TabToggle()<CR>'z
+
+
+" search for current selection
+ xnoremap * :<C-u>call <SID>VSetSearch()<CR>/<C-R>=@/<CR><CR>
+ xnoremap # :<C-u>call <SID>VSetSearch()<CR>?<C-R>=@/<CR><CR>
+ 
+ function! s:VSetSearch()
+     let temp = @s
+     norm! gv"sy
+     let @/ = '\V' . substitute(escape(@s, '/|'), '\n', '\\n', 'g')
+     let @s = temp
+ endfunction
+
+
+" Quick run via <F5>
+nnoremap <F5> :call <SID>compile_and_run()<CR>
+
+augroup SPACEVIM_ASYNCRUN
+    autocmd!
+    " Automatically open the quickfix window
+    autocmd User AsyncRunStart call asyncrun#quickfix_toggle(15, 1)
+augroup END
+
+function! s:compile_and_run()
+    exec 'w'
+    if &filetype == 'c'
+        exec "AsyncRun! gcc % -o %<; time ./%<"
+    elseif &filetype == 'cpp'
+       exec "AsyncRun! g++ -std=c++11 % -o %<; time ./%<"
+    elseif &filetype == 'java'
+       exec "AsyncRun! javac %; time java %<"
+    elseif &filetype == 'sh'
+       exec "AsyncRun! time bash %"
+    elseif &filetype == 'python'
+       exec "AsyncRun! time python %"
+    endif
+endfunction
+
+" python syntax highlighting
+hi pythonSelf  ctermfg=68  guifg=#5f87d7 cterm=bold gui=bold
+hi pythonLambdaExpr      ctermfg=105 guifg=#8787ff
+hi pythonInclude         ctermfg=68  guifg=#5f87d7 cterm=bold gui=bold
+hi pythonClass           ctermfg=167 guifg=#FF62B0 cterm=bold gui=bold
+hi pythonParameters      ctermfg=147 guifg=#AAAAFF
+hi pythonParam           ctermfg=175 guifg=#E37795
+hi pythonBrackets        ctermfg=183 guifg=#d7afff
+hi pythonClassParameters ctermfg=111 guifg=#FF5353
+hi pythonSelf ctermfg=68 guifg=#5f87d7 cterm=bold gui=bold
+
+hi pythonDottedName      ctermfg=74  guifg=#5fafd7
+
+hi pythonError           ctermfg=196 guifg=#ff0000
+hi pythonIndentError     ctermfg=197 guifg=#ff005f
+hi pythonSpaceError      ctermfg=198 guifg=#ff0087
+
+hi pythonBuiltinType     ctermfg=74  guifg=#9191FF
+hi pythonBuiltinObj      ctermfg=71  guifg=#5faf5f
+hi pythonBuiltinFunc     ctermfg=169 guifg=#d75faf cterm=bold gui=bold
+
+hi pythonException       ctermfg=207 guifg=#CC3366 cterm=bold gui=bold
+
